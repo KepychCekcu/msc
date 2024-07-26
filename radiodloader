@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Zeptá se na odkaz na YouTube video
+read -p "Zadejte odkaz na YouTube video: " youtube_url
+
+# Zeptá se na název finálního OGG souboru
+read -p "Zadejte název finálního OGG souboru (bez přípony): " output_name
+
+# Stažení videa jako MP3
+yt-dlp -x --audio-format mp3 "$youtube_url" -o "track.%(ext)s"
+
+# Převod MP3 do OGG s uživatelsky zadaným názvem
+ffmpeg -i track.mp3 -c:a libvorbis "$output_name.ogg"
+
+# Smazání původního MP3 souboru
+rm track.mp3
+
