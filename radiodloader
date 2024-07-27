@@ -15,3 +15,4 @@ ffmpeg -i track.mp3 -c:a libvorbis "$output_name.ogg"
 # Smazání původního MP3 souboru
 rm track.mp3
 
+# I recommend to ln this shell script in your /usr/local/bin 🐱👍
