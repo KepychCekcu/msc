@@ -1,0 +1,136 @@
+#!/bin/bash
+
+# Funkce pro zobrazení manuálu
+zobraz_help() {
+    echo "My Summer Car Track Downloader by PikaZap"
+    echo "Použití:"
+    echo "./msctd [MOŽNOST]"
+    echo ""
+    echo "MOŽNOST:"
+    echo "  --help                Zobrazí tento manuál"
+    echo "  <název písně>         Stáhne první výsledek hledání z YouTube na základě zadaného názvu písně"
+    echo "  <URL>                 Stáhne písničku z YouTube pomocí zadané URL"
+    echo ""
+    echo "Pokud není zadán žádný argument, spustí se interaktivní režim, kde si můžete vybrat mezi stahováním pomocí názvu písně nebo URL."
+}
+# Funkce pro vypsání autora
+zobraz_autora() {
+	echo "Authors:"
+	echo "PikaZap 1%"
+	echo "ChatGPT 99%"
+}
+# Funkce pro nalezení prvního volného čísla pro pojmenování souboru
+najdi_volne_jmeno() {
+    local i=1
+    while [[ -f "TRACK$i.ogg" ]]; do
+        i=$((i + 1))
+    done
+    echo "TRACK$i.ogg"
+}
+
+# Funkce pro stažení a převod souboru
+stahni_a_preved() {
+    local url=$1
+    local temp_output="temp_downloaded_song.mp3"
+    local final_output=$(najdi_volne_jmeno)
+
+    echo "Stahuji soubor z URL: $url"
+    
+    # Stažení souboru přímo ve formátu MP3
+    yt-dlp -x --audio-format mp3 --output "$temp_output" "$url"
+
+    # Ověření, zda se soubor stáhl
+    if [[ -f "$temp_output" ]]; then
+        echo "Převádím MP3 na OGG..."
+        # Převod MP3 na OGG pomocí ffmpeg
+        ffmpeg -i "$temp_output" -acodec libvorbis "$final_output"
+        echo "Převod dokončen: $final_output"
+
+        # Smazání původního MP3 souboru
+        rm "$temp_output"
+    else
+        echo "Stažení selhalo!"
+    fi
+}
+
+# Hlavní část programu
+if [[ "$#" -gt 0 ]]; then
+    # Pokud je zadán argument --help
+    if [[ "$1" == "--help" ]]; then
+        zobraz_help
+        exit 0
+    fi
+
+    # Pokud je zadán argument --autor
+    if [[ "$1" == "--autor" ]]; then
+	    zobraz_autora
+        exit 0
+    fi
+
+    vstup=$1
+
+    # Kontrola, zda je vstup URL nebo název písně
+    if [[ "$vstup" =~ ^https?:// ]]; then
+        # Pokud je vstup URL
+        stahni_a_preved "$vstup"
+    else
+        # Pokud je vstup název písně
+        yt-dlp -x --audio-format mp3 "ytsearch1:$vstup" -o "temp_downloaded_song.%(ext)s"
+
+        # Pokud je soubor stažen, převést ho na ogg
+        if [[ -f "temp_downloaded_song.mp3" ]]; then
+            final_output=$(najdi_volne_jmeno)
+            echo "Převádím MP3 na OGG..."
+            ffmpeg -i "temp_downloaded_song.mp3" -acodec libvorbis "$final_output"
+            echo "Převod dokončen: $final_output"
+
+            # Smazání původního MP3 souboru
+            rm "temp_downloaded_song.mp3"
+        else
+            echo "Stažení selhalo!"
+        fi
+    fi
+else
+    # Pokud není žádný argument, použije se interaktivní režim
+	echo "                        ⠀⠀⠰⢄⠀⠀⠀"
+	echo "                        ⠀⠀⠀⢇⠁⠀⠀"
+	echo "   ⠀⠀⠀⠀⠀⠂⠄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠀⠰⣿⡿⠀⠀"⠀
+	echo "   ⠀⠀⠀⠀⠀⠀⠀⠀⠁⠂⠄⡀⠀⠀⠀⠀⠀⠀⠀⠀ ⠀⠀⠀⠀⢀⠤⣀"
+	echo "   ⢀⣸⣒⣒⣒⣒⣒⣒⣒⣒⣒⣒⣒⣒⣶⣒⣒⣒⣻⡀ ⠀⠀⢠⣤⢆⡀⠎  ⠀⠀⠀⠀                                      ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣠⣤⣤⡤⢤⣤⣤⣄⣀⡀⠀⠀⠀⠀"
+	echo "   ⢸⠅⠻⠛⠿⠿⠯⠍⠉⠭⠿⠿⠿⠿⠿⡿⠿⠿⠿⡇ ⢠⠔⢊⠁⠙⠋⠀     __  ________ ______   __________       ⠀⠀⠀⠀⠀⠀⠀⣠⠞⠉⢹⣷⣶⣴⣿⠓⠀⡿⠀⣀⡉⣵⢄⠀⠀"
+	echo "   ⢸⠷⢭⣵⣤⡧⠼⡤⠧⠧⢿⡬⡼⠧⢥⣦⣴⡭⠦⡇ ⢈⣄⣬⡄⠀⠀⠀    /  |/  / ___// ____/  /_  __/ __ \      ⠀⢰⡃⠠⠄⡀⠘⠓⢺⣟⠿⢟⡛⠿⠚⠒⠒⢛⠝⠋⠡⢴⠈⠉⡆"
+	echo "   ⢸⣽⣿⣿⣿⣿⣏⣿⢹⣟⣻⡏⡏⣽⣿⣿⣿⣿⣏⡆ ⠿⠇⠉⠀⠀     / /|_/ /\__ \/ /        / / / / / /      ⡿⣳⣤⣤⣥⣤⢤⢄⠠⠍⢀⣀⡀⠀⡆⠀⠀⠀⡇⠀⠀⣰⣶⡦⠂"
+	echo "   ⢸⢿⣿⣿⣿⣿⡿⣿⣥⣤⣤⣬⡧⢿⣿⣯⣿⣿⡿⡇          / /  / /___/ / /___     / / / /_/ /       ⠣⡶⣖⣛⣛⣋⡭⡮⠄⢠⣿⣿⣿⡜⣇⣀⣀⣤⣧⠴⢾⣿⣿⠀⠀"
+	echo "   ⢸⣈⣻⣿⣿⣛⣋⣗⣒⣒⣒⣒⣂⣘⣻⣿⣿⣛⣃⠁         /_/  /_//____/\____/    /_/ /_____/        ⠀⠘⣿⣷⣶⠲⠶⠧⠿⣾⣿⣿⣿⠛⠉⠉⠁⠀⠀⠀⠘⠛⠃⠀⠀"
+	echo "   ⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠁⠀                                                   ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠻⠟⠃⠀⠀⠀          "
+    	echo "Vyberte možnost:"
+    	echo "1) Stahovat z YouTube podle názvu"
+    	echo "2) Stáhnout pomocí odkazu"
+
+    read -p "Zadejte volbu (1 nebo 2): " volba
+
+    if [[ "$volba" == "1" ]]; then
+        read -p "Zadejte název písně na YouTube: " nazev
+        yt-dlp -x --audio-format mp3 "ytsearch1:$nazev" -o "temp_downloaded_song.%(ext)s"
+
+        # Pokud je soubor stažen, převést ho na ogg
+        if [[ -f "temp_downloaded_song.mp3" ]]; then
+            final_output=$(najdi_volne_jmeno)
+            echo "Převádím MP3 na OGG..."
+            ffmpeg -i "temp_downloaded_song.mp3" -acodec libvorbis "$final_output"
+            echo "Převod dokončen: $final_output"
+
+            # Smazání původního MP3 souboru
+            rm "temp_downloaded_song.mp3"
+        else
+            echo "Stažení selhalo!"
+        fi
+
+    elif [[ "$volba" == "2" ]]; then
+        read -p "Zadejte URL songu: " odkaz
+        stahni_a_preved "$odkaz"
+    else
+        echo "Neplatná volba!"
+    fi
+fi
+
